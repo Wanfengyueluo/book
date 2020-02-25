@@ -2,18 +2,18 @@
   <div class="login_container">
     <div class="login_box">
       <div class="avatar_box">
-        <img src="../assets/logo.png" alt />
+        <img src="../assets/logo.png" />
       </div>
       <el-form ref="loginFormRef" :model="loginForm" :rules="LoginRules" class="el-form_box">
-        <el-form-item prop="username">
-          <el-input v-model="loginForm.username" prefix-icon="el-icon-user"></el-input>
+        <el-form-item prop="userName">
+          <el-input v-model="loginForm.userName" prefix-icon="el-icon-user"></el-input>
         </el-form-item>
-        <el-form-item prop='password'>
+        <el-form-item prop="password">
           <el-input v-model="loginForm.password" type="password" prefix-icon="el-icon-lock"></el-input>
         </el-form-item>
         <div class="button_box">
           <el-button @click="login" type="primary">Login</el-button>
-          <el-button type="primary">Register</el-button>
+          <el-button @click="register" type="primary">Register</el-button>
         </div>
       </el-form>
     </div>
@@ -21,15 +21,16 @@
 </template>
 
 <script>
+
 export default {
   data() {
     return {
       loginForm: {
-        username: "admin",
-        password: "123456"
+        userName: "",
+        password: ""
       },
       LoginRules: {
-        username: [
+        userName: [
           { required: true, message: "请输入用户名", trigger: "blur" },
           { min: 3, max: 5, message: "长度在 3 到 5 个字符", trigger: "blur" }
         ],
@@ -41,13 +42,57 @@ export default {
     };
   },
   methods: {
-      login(){
-          this.$refs.loginFormRef.validate(async valid => {
-              if(!valid) return;
-              const result =await this.$http.post('test',JSON.stringify(this.loginForm))
-              console.log(result)
-          })
-      }
+    login() {
+      this.$refs.loginFormRef.validate(async valid => {
+        if (!valid) return;
+        const result = await this.$http.post(
+          "/api/login",
+          JSON.stringify(this.loginForm)
+        );
+        if (result.data.code ==200) {
+          this.$store.commit('changeName',result.data.data.userName)
+          this.$store.commit('changeLoginState',true)
+          this.$store.commit('changeUser',{
+            name:result.data.data.userName,
+            id:result.data.data.userId
+            })
+          this.$message.success({
+            message: "恭喜你，登录成功!",
+            type: "success",
+            center: true
+          });
+          this.$router.push('/index/home')
+        } else {
+          this.$message.error({
+            message: "登录失败！请重试！",
+            center: true
+          });
+        }
+      });
+    },
+    register() {
+      this.$refs.loginFormRef.validate(async valid => {
+        if (!valid) return;
+        const result = await this.$http.post(
+          "/api/register",
+          JSON.stringify(this.loginForm)
+        );
+        console.log(result)
+        if (result.data === "SUCCESS"){
+          this.$message.success({
+            message: "恭喜你，注册成功,请登录！",
+            type: "success",
+            center: true
+          });
+        }
+        else {
+          this.$message.error({
+            message: "注册失败！请重试！",
+            center: true
+          });
+        }
+      });
+    }
   }
 };
 </script>
@@ -55,6 +100,9 @@ export default {
 <style lang="less" scoped>
 .login_container {
   background-color: aquamarine;
+  background-image: url(../assets/login.jpg);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
   height: 100%;
 }
 .login_box {
